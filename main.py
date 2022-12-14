@@ -9,9 +9,10 @@ def transcribe_all_audios_from_directory(directory = 'audio'):
 
     for root, dirs, files in os.walk(directory):
         for filename in files:
+            key = remove_extension_from_filename(filename)
             file = os.path.join(root, filename)
             transcription = model.transcribe(file, fp16=False)
-            transcriptions[filename] = transcription['text']
+            transcriptions[key] = transcription['text']
 
     return transcriptions;
 
@@ -20,13 +21,17 @@ def get_all_official_transcriptions(directory = 'transcriptions'):
     
     for root, dirs, files in os.walk(directory):
         for filename in files:
-            dictionary_keys.append(filename)
+            key = remove_extension_from_filename(filename)
+            dictionary_keys.append(key)
             file = open(os.path.join(root, filename))
             transcription = file.read()
-            official_transcriptions[filename] = transcription
+            official_transcriptions[key] = transcription
             file.close()
 
     return official_transcriptions
+
+def remove_extension_from_filename(filename: str):
+    return filename.split('.', 1)[0]
 
 official_transcriptions = get_all_official_transcriptions('transcriptions')
 whisper_transcriptions = transcribe_all_audios_from_directory('audio')
