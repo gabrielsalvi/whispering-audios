@@ -2,12 +2,16 @@ import whisper
 import os
 
 model = whisper.load_model('base')
- 
-def transcribe_all_audios_from_directory(directory):
+
+def transcribe_all_audios_from_directory(directory = 'audio'):
+    transcriptions = {}
+
     for root, dirs, files in os.walk(directory):
         for filename in files:
             file = os.path.join(root, filename)
-            result = model.transcribe(file, fp16=False)
-            print(result["text"] + "\n")
+            transcription = model.transcribe(file, fp16=False)
+            transcriptions[filename] = transcription['text']
 
-transcribe_all_audios_from_directory('audio')
+    return transcriptions;
+
+whisper_transcriptions = transcribe_all_audios_from_directory('audio')
