@@ -2,6 +2,7 @@ import whisper
 import os
 
 model = whisper.load_model('base')
+dictionary_keys = []
 
 def transcribe_all_audios_from_directory(directory = 'audio'):
     transcriptions = {}
@@ -19,12 +20,13 @@ def get_all_official_transcriptions(directory = 'transcriptions'):
     
     for root, dirs, files in os.walk(directory):
         for filename in files:
+            dictionary_keys.append(filename)
             file = open(os.path.join(root, filename))
             transcription = file.read()
             official_transcriptions[filename] = transcription
             file.close()
-            
+
     return official_transcriptions
 
-official_transcriptions = get_all_official_transcriptions()
+official_transcriptions = get_all_official_transcriptions('transcriptions')
 whisper_transcriptions = transcribe_all_audios_from_directory('audio')
