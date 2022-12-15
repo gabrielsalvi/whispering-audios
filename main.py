@@ -1,7 +1,10 @@
-import whisper
 import os
+import sys
+import whisper
+from whisper.normalizers import BasicTextNormalizer
 
 model = whisper.load_model('base')
+normalizer = BasicTextNormalizer()
 dictionary_keys = []
 
 def main():
@@ -16,7 +19,7 @@ def transcribe_all_audios_from_directory(directory = 'audio'):
             key = remove_extension_from_filename(filename)
             file = os.path.join(root, filename)
             transcription = model.transcribe(file, fp16=False)
-            transcriptions[key] = clean_transcription(transcription['text'])
+            transcriptions[key] = normalizer(transcription['text']).strip()
 
     return transcriptions;
 
@@ -29,15 +32,12 @@ def get_all_official_transcriptions(directory = 'transcriptions'):
             dictionary_keys.append(key)
             file = open(os.path.join(root, filename))
             transcription = file.read()
-            official_transcriptions[key] = clean_transcription(transcription)
+            official_transcriptions[key] = normalizer(transcription).strip()
             file.close()
 
     return official_transcriptions
 
 def remove_extension_from_filename(filename: str):
     return filename.split('.', 1)[0]
-
-def clean_transcription(transcription: str):
-    return transcription.replace('\n', ' ').replace('\r', ' ').strip()
 
 main()
