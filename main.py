@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 import jiwer
 import whisper
 from whisper.normalizers import BasicTextNormalizer
@@ -21,8 +22,14 @@ def transcribe_all_audios_from_directory(directory = 'audio'):
         for filename in files:
             key = remove_extension_from_filename(filename)
             file = os.path.join(root, filename)
-            transcription = model.transcribe(file, fp16=False)
-            transcriptions[key] = normalizer(transcription['text']).strip()
+            transcription = {}
+            transcription['name'] = key
+            start_time = time.time()
+            whisper_transcription = model.transcribe(file, fp16=False)
+            transcription['time'] = time.time() - start_time
+            transcription['text'] = normalizer(whisper_transcription['text']).strip()
+            transcription['length'] = len(transcription['text'].split())
+            transcriptions[key] = transcription
 
     return transcriptions;
 
@@ -34,8 +41,11 @@ def get_all_official_transcriptions(directory = 'transcriptions'):
             key = remove_extension_from_filename(filename)
             dictionary_keys.append(key)
             file = open(os.path.join(root, filename))
-            transcription = file.read()
-            official_transcriptions[key] = normalizer(transcription).strip()
+            transcription = {}
+            transcription['name'] = key
+            transcription['text'] = normalizer(file.read()).strip()
+            transcription['length'] = len(transcription['text'].split())
+            official_transcriptions[key] = transcription
             file.close()
 
     return official_transcriptions
@@ -46,8 +56,6 @@ def compare_transcriptions(official_transcriptions, whisper_transcriptions, keys
 
     for key in keys:
         officcial_transcription, whisper_transcription = get_transcription_value(official_transcriptions, whisper_transcriptions, key)
-        wer = jiwer.wer(officcial_transcription, whisper_transcription)
-        print(f"WER: {wer * 100:.2f}%")
 
 def get_transcription_value(official_transcriptions, whisper_transcriptions, key):
     try:
