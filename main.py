@@ -57,6 +57,20 @@ def compare_transcriptions(official_transcriptions, whisper_transcriptions, keys
     for key in keys:
         officcial_transcription, whisper_transcription = get_transcription_value(official_transcriptions, whisper_transcriptions, key)
 
+        measures = jiwer.compute_measures(officcial_transcription['text'], whisper_transcription['text'])
+        
+        # metricas
+        hits = measures['hits']
+        misses = officcial_transcription['length'] - hits
+        wer = round(measures['wer'] * 100, 2)
+
+        print(whisper_transcription['name'])
+        print(whisper_transcription['text'])
+        print(whisper_transcription['time'])
+        print(hits)
+        print(misses)
+        print(wer)
+
 def get_transcription_value(official_transcriptions, whisper_transcriptions, key):
     try:
         officcial_transcription = official_transcriptions[key]
