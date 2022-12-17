@@ -12,6 +12,8 @@ normalizer = BasicTextNormalizer()
 dictionary_keys = []
 
 def main():
+    open('output.txt', 'w').close()
+
     official_transcriptions = get_all_official_transcriptions('transcriptions')
     whisper_transcriptions = transcribe_all_audios_from_directory('audio')
 
@@ -78,7 +80,7 @@ def get_transcription_value(official_transcriptions, whisper_transcriptions, key
         sys.exit('A transcrição do arquivo ' + key + ' não foi encontrada!')
 
 def save_to_file(officcial_transcription, whisper_transcription):
-    f = open('output.txt', 'w')
+    f = open('output.txt', 'a')
 
     if (os.stat(f.name).st_size == 0):
         f.write('Tamanho do modelo: ' + model_size.capitalize() + '\n')
