@@ -23,14 +23,14 @@ def transcribe_all_audios_from_directory(directory = 'audio'):
     for root, dirs, files in os.walk(directory):
         for filename in files:
             key = remove_extension_from_filename(filename)
-            file = os.path.join(root, filename)
+            filepath = os.path.join(root, filename)
             transcription = {}
             transcription['name'] = key
             start_time = time.time()
-            whisper_transcription = model.transcribe(file, fp16=False)
+            whisper_transcription = model.transcribe(filepath, fp16=False)
             transcription['time'] = round((time.time() - start_time) / 60, 2)
             transcription['text'] = normalizer(whisper_transcription['text']).strip()
-            hours, minutes, seconds = get_audio_duration(int(MP3(file).info.length))
+            hours, minutes, seconds = get_audio_duration(int(MP3(filepath).info.length))
             transcription['length'] = str(minutes) + ':' + str(seconds)
             transcriptions[key] = transcription
             
@@ -62,9 +62,7 @@ def compare_transcriptions(official_transcriptions, whisper_transcriptions, keys
 
         measures = jiwer.compute_measures(officcial_transcription['text'], whisper_transcription['text'])
         
-        # metricas
-        hits = measures['hits']
-        whisper_transcription['misses'] = officcial_transcription['num_of_words'] - hits
+        whisper_transcription['misses'] = officcial_transcription['num_of_words'] - measures['hits']
         whisper_transcription['wer'] = round(measures['wer'] * 100, 2)
 
         save_to_file(officcial_transcription, whisper_transcription)
