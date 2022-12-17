@@ -5,7 +5,8 @@ import jiwer
 import whisper
 from whisper.normalizers import BasicTextNormalizer
 
-model = whisper.load_model('medium')
+model_size = 'medium'
+model = whisper.load_model(model_size)
 normalizer = BasicTextNormalizer()
 dictionary_keys = []
 
@@ -26,9 +27,8 @@ def transcribe_all_audios_from_directory(directory = 'audio'):
             transcription['name'] = key
             start_time = time.time()
             whisper_transcription = model.transcribe(file, fp16=False)
-            transcription['time'] = time.time() - start_time
+            transcription['time'] = round((time.time() - start_time) / 60, 2)
             transcription['text'] = normalizer(whisper_transcription['text']).strip()
-            transcription['length'] = len(transcription['text'].split())
             transcriptions[key] = transcription
 
     return transcriptions;
@@ -44,7 +44,7 @@ def get_all_official_transcriptions(directory = 'transcriptions'):
             transcription = {}
             transcription['name'] = key
             transcription['text'] = normalizer(file.read()).strip()
-            transcription['length'] = len(transcription['text'].split())
+            transcription['num_of_words'] = len(transcription['text'].split())
             official_transcriptions[key] = transcription
             file.close()
 
@@ -61,15 +61,10 @@ def compare_transcriptions(official_transcriptions, whisper_transcriptions, keys
         
         # metricas
         hits = measures['hits']
-        misses = officcial_transcription['length'] - hits
-        wer = round(measures['wer'] * 100, 2)
+        whisper_transcription['misses'] = officcial_transcription['num_of_words'] - hits
+        whisper_transcription['wer'] = round(measures['wer'] * 100, 2)
 
-        print(whisper_transcription['name'])
-        print(whisper_transcription['text'])
-        print(whisper_transcription['time'])
-        print(hits)
-        print(misses)
-        print(wer)
+        save_to_file(officcial_transcription, whisper_transcription)
 
 def get_transcription_value(official_transcriptions, whisper_transcriptions, key):
     try:
@@ -78,6 +73,22 @@ def get_transcription_value(official_transcriptions, whisper_transcriptions, key
         return officcial_transcription, whisper_transcription
     except:
         sys.exit('A transcrição do arquivo ' + key + ' não foi encontrada!')
+
+def save_to_file(officcial_transcription, whisper_transcription):
+    f = open('output.txt', 'w')
+
+    if (os.stat(f.name).st_size == 0):
+        f.write('Tamanho do modelo: ' + model_size.capitalize() + '\n')
+        f.write('Idioma dos aúdios: Inglês' + '\n')
+
+    f.write('\nNome do aúdio: ' + officcial_transcription['name'] + '\n')
+    f.write('Transcrição oficial: ' + officcial_transcription['text'] + '\n')
+    f.write('Transcrição do whisper: ' + whisper_transcription['text'] + '\n')
+    f.write('Quantidade de palavras erradas: ' + str(whisper_transcription['misses']) + '\n')
+    f.write('Percentual de palavras erradas: ' + str(whisper_transcription['wer']) + ' %\n')
+    f.write('Tempo de execução: ' + str(whisper_transcription['time']) + ' minutos\n')
+
+    f.close()
 
 def remove_extension_from_filename(filename: str):
     return filename.split('.', 1)[0]
