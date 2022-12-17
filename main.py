@@ -28,10 +28,12 @@ def transcribe_all_audios_from_directory(directory = 'audio'):
             transcription['name'] = key
             start_time = time.time()
             whisper_transcription = model.transcribe(filepath, fp16=False)
-            transcription['time'] = round((time.time() - start_time) / 60, 2)
+            execution_time = time.time() - start_time
+            _, minutes, seconds = get_duration(int(execution_time))
+            transcription['time'] = str(minutes).zfill(2) + ':' + str(seconds).zfill(2)
             transcription['text'] = normalizer(whisper_transcription['text']).strip()
-            hours, minutes, seconds = get_audio_duration(int(MP3(filepath).info.length))
-            transcription['length'] = str(minutes) + ':' + str(seconds)
+            _, minutes, seconds = get_duration(int(MP3(filepath).info.length))
+            transcription['length'] = str(minutes).zfill(2) + ':' + str(seconds).zfill(2)
             transcriptions[key] = transcription
             
     return transcriptions;
@@ -88,14 +90,14 @@ def save_to_file(officcial_transcription, whisper_transcription):
     f.write('Transcrição do whisper: ' + whisper_transcription['text'] + '\n')
     f.write('Quantidade de palavras erradas: ' + str(whisper_transcription['misses']) + '\n')
     f.write('Percentual de palavras erradas: ' + str(whisper_transcription['wer']) + ' %\n')
-    f.write('Tempo de execução: ' + str(whisper_transcription['time']) + ' minutos\n')
+    f.write('Tempo de execução: ' + whisper_transcription['time'] + '\n')
 
     f.close()
 
 def remove_extension_from_filename(filename: str):
     return filename.split('.', 1)[0]
 
-def get_audio_duration(length):
+def get_duration(length):
     hours = length // 3600
     length %= 3600
     mins = length // 60
