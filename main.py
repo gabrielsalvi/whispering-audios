@@ -4,6 +4,7 @@ import time
 import jiwer
 import whisper
 from whisper.normalizers import BasicTextNormalizer
+from mutagen.mp3 import MP3
 
 model_size = 'medium'
 model = whisper.load_model(model_size)
@@ -29,8 +30,10 @@ def transcribe_all_audios_from_directory(directory = 'audio'):
             whisper_transcription = model.transcribe(file, fp16=False)
             transcription['time'] = round((time.time() - start_time) / 60, 2)
             transcription['text'] = normalizer(whisper_transcription['text']).strip()
+            hours, minutes, seconds = get_audio_duration(int(MP3(file).info.length))
+            transcription['length'] = str(minutes) + ':' + str(seconds)
             transcriptions[key] = transcription
-
+            
     return transcriptions;
 
 def get_all_official_transcriptions(directory = 'transcriptions'):
@@ -81,7 +84,8 @@ def save_to_file(officcial_transcription, whisper_transcription):
         f.write('Tamanho do modelo: ' + model_size.capitalize() + '\n')
         f.write('Idioma dos aúdios: Inglês' + '\n')
 
-    f.write('\nNome do aúdio: ' + officcial_transcription['name'] + '\n')
+    f.write('\nNome do áudio: ' + officcial_transcription['name'] + '\n')
+    f.write('Duração do áudio: ' + str(whisper_transcription['length']) + '\n')
     f.write('Transcrição oficial: ' + officcial_transcription['text'] + '\n')
     f.write('Transcrição do whisper: ' + whisper_transcription['text'] + '\n')
     f.write('Quantidade de palavras erradas: ' + str(whisper_transcription['misses']) + '\n')
@@ -92,5 +96,13 @@ def save_to_file(officcial_transcription, whisper_transcription):
 
 def remove_extension_from_filename(filename: str):
     return filename.split('.', 1)[0]
+
+def get_audio_duration(length):
+    hours = length // 3600
+    length %= 3600
+    mins = length // 60
+    length %= 60
+    seconds = length
+    return hours, mins, seconds
 
 main()
