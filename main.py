@@ -67,7 +67,7 @@ def compare_transcriptions(official_transcriptions, whisper_transcriptions, keys
         measures = jiwer.compute_measures(officcial_transcription['text'], whisper_transcription['text'])
         
         whisper_transcription['misses'] = officcial_transcription['num_of_words'] - measures['hits']
-        whisper_transcription['wer'] = round(measures['wer'] * 100, 2)
+        whisper_transcription['misses_percentage'] = round(whisper_transcription['misses'] * 100 / officcial_transcription['num_of_words'], 2)
 
         save_to_file(officcial_transcription, whisper_transcription)
 
@@ -91,7 +91,7 @@ def save_to_file(officcial_transcription, whisper_transcription):
     f.write('Transcrição oficial: ' + officcial_transcription['text'] + '\n')
     f.write('Transcrição do whisper: ' + whisper_transcription['text'] + '\n')
     f.write('Quantidade de palavras erradas: ' + str(whisper_transcription['misses']) + '\n')
-    f.write('Percentual de palavras erradas: ' + str(whisper_transcription['wer']) + ' %\n')
+    f.write('Percentual de palavras erradas: ' + str(whisper_transcription['misses_percentage']) + ' %\n')
     f.write('Tempo de execução: ' + whisper_transcription['time'] + '\n')
 
     f.close()
